@@ -156,7 +156,7 @@ dsh plugin --profile desktop add link:D:\path\to\dsh-svn
 
 ## 5. 本地初始化与推送
 
-在 `dsh-svn` 目录执行（把 `<your-github>` / `<your-gitee>` 换成你的用户名）：
+在 `dsh-svn` 目录执行（把 `EastChilde` / `EastChilde` 换成你的用户名）：
 
 ```bash
 cd dsh-svn
@@ -166,11 +166,11 @@ git commit -m "feat: initial dsh-svn plugin"
 git branch -M main
 
 # GitHub
-git remote add origin https://github.com/<your-github>/dsh-svn.git
+git remote add origin https://github.com/EastChilde/dsh-svn.git
 git push -u origin main
 
 # Gitee（同一个本地仓库可以加第二个 remote）
-git remote add gitee https://gitee.com/<your-gitee>/dsh-svn.git
+git remote add gitee https://gitee.com/EastChilde/dsh-svn.git
 git push -u gitee main
 ```
 
@@ -193,15 +193,15 @@ git push -u gitee main
 
 ```text
 给 DeepSeek Harness 写了个 SVN 面板：TortoiseSVN 风格的更改 / 历史 / 差异 / blame，支持更新、提交、冲突处理，还带 5 个只读 Agent 工具。已适配 Windows 中文路径。
-GitHub：https://github.com/<your-github>/dsh-svn
-Gitee：https://gitee.com/<your-gitee>/dsh-svn
+GitHub：https://github.com/EastChilde/dsh-svn
+Gitee：https://gitee.com/EastChilde/dsh-svn
 ```
 
 **English**
 
 ```text
 Built a TortoiseSVN-style SVN panel for DeepSeek Harness: working-copy changes, commit history, revision diffs, blame, update/commit/resolve, plus 5 read-only agent tools. Windows CJK paths handled.
-https://github.com/<your-github>/dsh-svn
+https://github.com/EastChilde/dsh-svn
 ```
 
 ## 8. SEO / 检索关键词

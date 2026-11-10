@@ -4,6 +4,8 @@
 
 > 非 TortoiseSVN 官方项目，也非 DeepSeek 官方项目；「TortoiseSVN 风格」仅指交互参考。TortoiseSVN / DeepSeek 是其各自权利人的商标。
 
+仓库：[GitHub](https://github.com/EastChilde/dsh-svn) · [Gitee](https://gitee.com/EastChilde/dsh-svn)
+
 - 服务端：Cordis 插件 + 宿主 `webServer` 路由 + 5 个只读 Agent 工具
 - 浏览器端：`window.__ModuleLoader__` 客户端插件，React + 纯 DOM，无构建步骤
 - 已在 DSH `desktop` profile 实测通过
