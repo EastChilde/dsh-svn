@@ -1,0 +1,51 @@
+{
+  "name": "dsh-svn",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness 的 TortoiseSVN 风格 SVN 管理面板：更改、提交历史、版本差异、blame，含 5 个只读 Agent 工具",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "deepseek",
+    "svn",
+    "subversion",
+    "tortoisesvn",
+    "version-control",
+    "vcs",
+    "blame",
+    "diff",
+    "commit-history",
+    "cordis",
+    "javascript"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./client/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "client",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "docs",
+    "test"
+  ],
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots"
+      ],
+      "platform": "web"
+    }
+  },
+  "author": "DSH SVN plugin",
+  "license": "MIT"
+}
