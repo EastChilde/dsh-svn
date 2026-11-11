@@ -203,6 +203,18 @@ window.__ModuleLoader__.load({
 .svn-choice span { font-size: 11px; color: var(--svn-muted); }
 .svn-candidate { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--svn-soft); border-radius: 8px; }
 .svn-candidate .svn-path { font-size: 11px; }
+.svn-picker { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.svn-picker-path { display: flex; gap: 6px; align-items: center; }
+.svn-picker-roots { display: flex; gap: 5px; flex-wrap: wrap; }
+.svn-picker-list { border: 1px solid var(--svn-line); border-radius: 9px; max-height: 42vh; overflow: auto; background: rgba(127,127,127,.03); }
+.svn-picker-row { display: flex; align-items: center; gap: 7px; padding: 6px 9px; border-bottom: 1px solid var(--svn-soft); cursor: pointer; min-width: 0; }
+.svn-picker-row:last-child { border-bottom: none; }
+.svn-picker-row:hover { background: var(--svn-hover); }
+.svn-picker-icon { color: var(--svn-muted); font-size: 11px; width: 12px; flex: none; }
+.svn-picker-row .svn-path { flex: 0 1 auto; font-size: 12px; color: CanvasText; }
+.svn-picker-wc { font-size: 9.5px; padding: 0 5px; border-radius: 4px; background: rgba(48,164,108,.16); color: #2f9e68; flex: none; font-weight: 600; margin-left: 2px; }
+.svn-picker-spacer { flex: 1; }
+.svn-picker-empty { padding: 24px 10px; text-align: center; color: var(--svn-muted); font-size: 12px; }
 .svn-hbtn { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 9px; border-radius: 7px; border: 1px solid var(--svn-line); background: transparent; cursor: pointer; font-size: 11.5px; color: inherit; }
 .svn-hbtn:hover { background: var(--svn-hover); }
 .svn-hbtn-dot { width: 6px; height: 6px; border-radius: 50%; background: #4d6bfe; }
@@ -1534,12 +1546,120 @@ window.__ModuleLoader__.load({
       )
     }
 
+    function DirectoryPicker(props) {
+      const [current, setCurrent] = useState(props.initial || '')
+      const [data, setData] = useState(null)
+      const [loading, setLoading] = useState(false)
+      const [error, setError] = useState('')
+      const [jump, setJump] = useState(props.initial || '')
+      const seq = useRef(0)
+
+      const load = useCallback(async (target) => {
+        const id = seq.current + 1
+        seq.current = id
+        setLoading(true)
+        setError('')
+        try {
+          const result = await api('/browse', { path: target || '' })
+          if (seq.current !== id) return
+          setData(result)
+          setCurrent(result.current || '')
+          setJump(result.current || '')
+        } catch (err) {
+          if (seq.current === id) setError(String((err && err.message) || err))
+        } finally {
+          if (seq.current === id) setLoading(false)
+        }
+      }, [])
+
+      useEffect(() => { load(props.initial || '') }, [load, props.initial])
+
+      const canPick = !!(data && data.current)
+      const isWc = !!(data && data.isWc)
+
+      return h(Modal, {
+        title: '选择 SVN 工作副本目录',
+        width: 720,
+        onClose: props.onClose,
+        footer: h(React.Fragment, null,
+          h('button', { type: 'button', className: 'svn-btn', onClick: props.onClose }, '取消'),
+          h('button', {
+            type: 'button',
+            className: 'svn-btn primary',
+            disabled: !canPick || loading || !isWc,
+            title: isWc ? '' : '请进入包含 .svn 的工作副本根目录',
+            onClick: () => props.onPick(data.current, true),
+          }, '选择并添加'),
+        ),
+      },
+        h('div', { className: 'svn-picker' },
+          h('div', { className: 'svn-picker-path' },
+            h('button', {
+              type: 'button',
+              className: 'svn-btn small',
+              onClick: () => load(data && data.parent ? data.parent : ''),
+              disabled: loading || !data || (!data.current && !data.parent),
+            }, '↑ 上一级'),
+            h('input', {
+              className: 'svn-input grow',
+              value: jump,
+              placeholder: '输入路径后回车，例如 D:\\projects',
+              onChange: (event) => setJump(event.target.value),
+              onKeyDown: (event) => { if (event.key === 'Enter') load(jump.trim()) },
+            }),
+            h('button', { type: 'button', className: 'svn-btn small', onClick: () => load(jump.trim()), disabled: loading }, '转到'),
+          ),
+          data && data.roots && data.roots.length ? h('div', { className: 'svn-picker-roots' },
+            data.roots.map((root) => h('button', {
+              key: root.path,
+              type: 'button',
+              className: 'svn-chip',
+              title: root.path,
+              onClick: () => load(root.path),
+            }, root.name)),
+          ) : null,
+          data && data.current
+            ? h('div', { className: 'svn-hint' }, isWc
+              ? '✓ 当前目录是 SVN 工作副本，可直接添加。'
+              : '当前目录不是工作副本（没有 .svn）；请继续进入工作副本根目录。')
+            : h('div', { className: 'svn-hint' }, '选择一个磁盘或常用目录开始；只列出文件夹，不读取文件内容。'),
+          error ? h('div', { className: 'svn-errorbox', style: { margin: 0 } },
+            h('span', null, error),
+            h('button', { type: 'button', className: 'svn-btn small', onClick: () => load(current || '') }, '重试'),
+          ) : null,
+          loading ? h('div', { className: 'svn-loading', style: { flex: 'none', padding: 18 } }, h(Spinner), '读取目录…') : null,
+          !loading && !error ? h('div', { className: 'svn-picker-list' },
+            data && data.atRoot ? h('div', { className: 'svn-picker-empty' }, '从上方选择磁盘、用户目录或当前目录') :
+            data && data.entries.length === 0 ? h('div', { className: 'svn-picker-empty' }, '这个目录下没有子目录') :
+            data ? data.entries.map((entry) => h('div', {
+              key: entry.path,
+              className: 'svn-picker-row',
+              title: entry.path,
+              onClick: () => load(entry.path),
+            },
+              h('span', { className: 'svn-picker-icon' }, '▸'),
+              h('span', { className: 'svn-path' }, entry.name),
+              entry.isWc ? h('span', { className: 'svn-picker-wc' }, '.svn') : null,
+              h('span', { className: 'svn-picker-spacer' }),
+              entry.isWc ? h('button', {
+                type: 'button',
+                className: 'svn-btn small primary',
+                onClick: (event) => { event.stopPropagation(); props.onPick(entry.path, true) },
+              }, '选用') : null,
+            )) : null,
+          ) : null,
+          data && data.truncated ? h('div', { className: 'svn-hint' }, '子目录过多，只显示前 800 个；可直接在上方输入路径跳转。') : null,
+        ),
+      )
+    }
+
     function AddWcDialog(props) {
       const [pathInput, setPathInput] = useState('')
       const [scanRoot, setScanRoot] = useState('')
       const [candidates, setCandidates] = useState(null)
       const [busy, setBusy] = useState('')
       const [error, setError] = useState('')
+      const [pickerOpen, setPickerOpen] = useState(false)
 
       async function add(target) {
         setBusy('正在校验工作副本…')
@@ -1575,7 +1695,7 @@ window.__ModuleLoader__.load({
         onClose: props.onClose,
         footer: h('button', { type: 'button', className: 'svn-btn', onClick: props.onClose }, '关闭'),
       },
-        h('div', { className: 'svn-hint' }, '填一个包含 .svn 的目录，或用「扫描」自动查找。'),
+        h('div', { className: 'svn-hint' }, '点「浏览」逐级选择文件夹；识别到 .svn 的目录会标记为工作副本，可直接添加。也可以直接填路径或用「扫描」自动查找。'),
         h('div', { style: { display: 'flex', gap: 6 } },
           h('input', {
             className: 'svn-input grow',
@@ -1585,7 +1705,8 @@ window.__ModuleLoader__.load({
             onChange: (event) => setPathInput(event.target.value),
             onKeyDown: (event) => { if (event.key === 'Enter' && pathInput.trim()) add(pathInput.trim()) },
           }),
-          h('button', { type: 'button', className: 'svn-btn primary', onClick: () => pathInput.trim() ? add(pathInput.trim()) : setError('请先填目录路径'), disabled: !!busy }, '添加'),
+          h('button', { type: 'button', className: 'svn-btn', onClick: () => setPickerOpen(true), disabled: !!busy }, '浏览…'),
+          h('button', { type: 'button', className: 'svn-btn primary', onClick: () => pathInput.trim() ? add(pathInput.trim()) : setError('请先选择目录'), disabled: !!busy }, '添加'),
         ),
         h('div', { style: { display: 'flex', gap: 6, alignItems: 'center', marginTop: 2 } },
           h('input', {
@@ -1608,6 +1729,16 @@ window.__ModuleLoader__.load({
             h('button', { type: 'button', className: 'svn-btn small primary', onClick: () => add(item.path), disabled: !!busy }, '添加'),
           )),
         ) : null,
+        pickerOpen ? h(DirectoryPicker, {
+          initial: pathInput.trim() || undefined,
+          onClose: () => setPickerOpen(false),
+          onPick: (selectedPath, selectedIsWc) => {
+            setPathInput(selectedPath)
+            setPickerOpen(false)
+            if (selectedIsWc) add(selectedPath)
+            else setError('所选目录不是 SVN 工作副本（没有 .svn），请继续进入工作副本根目录。')
+          },
+        }) : null,
       )
     }
 

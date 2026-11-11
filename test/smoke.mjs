@@ -63,6 +63,22 @@ await check('非工作副本目录会被拒绝', async () => {
   await assert.rejects(() => core.addWorkingCopy(fixtures), /不是 SVN 工作副本/)
 })
 
+console.log('目录浏览')
+await check('列出目录并标记工作副本', async () => {
+  const rootsView = await core.browseDirectories('')
+  assert.ok(rootsView.roots.length >= 1)
+  const view = await core.browseDirectories(fixtures)
+  assert.ok(view.entries.some((entry) => entry.name === 'wc' && entry.isWc))
+  assert.ok(view.entries.every((entry) => entry.name !== '.svn'))
+  const inside = await core.browseDirectories(wc)
+  assert.equal(inside.isWc, true)
+  assert.ok(inside.parent)
+})
+
+await check('浏览不存在的目录会报错', async () => {
+  await assert.rejects(() => core.browseDirectories(path.join(fixtures, 'no-such-dir')), /目录不存在/)
+})
+
 console.log('状态')
 const status = await core.getStatus(wc)
 await check('冲突 / 新增 / 删除 / 未纳入 都被识别', () => {

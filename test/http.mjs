@@ -7,7 +7,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const base = 'http://127.0.0.1:61382/dsh-svn'
+const base = process.env.DSH_SVN_BASE || 'http://127.0.0.1:61382/dsh-svn'
 const here = path.dirname(fileURLToPath(import.meta.url))
 const fixtures = path.join(here, '..', 'fixtures')
 const wc = path.join(fixtures, 'wc')
@@ -51,6 +51,12 @@ await check('冲突 / 新增 / 删除 / 缺失 / 未纳入', () => {
   assert.equal(status.summary.missing, 1)
   assert.ok(status.summary.unversioned >= 1)
   assert.equal(status.entries[0].item, 'conflicted')
+})
+
+await check('目录浏览能识别工作副本', async () => {
+  const view = await post('/browse', { path: wc })
+  assert.equal(view.isWc, true)
+  assert.ok(view.roots.length >= 1)
 })
 
 console.log('历史')
