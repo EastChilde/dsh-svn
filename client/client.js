@@ -28,6 +28,7 @@ window.__ModuleLoader__.load({
     const API = '/dsh-svn'
     const CSS_ID = 'dsh-svn-style'
     const WC_STORAGE = 'dsh-svn:wc'
+    const LAST_DIR_STORAGE = 'dsh-svn:lastDir'
     const COMMIT_ITEMS = { modified: 1, added: 1, deleted: 1, replaced: 1 }
 
     const STATUS_META = {
@@ -215,6 +216,8 @@ window.__ModuleLoader__.load({
 .svn-picker-wc { font-size: 9.5px; padding: 0 5px; border-radius: 4px; background: rgba(48,164,108,.16); color: #2f9e68; flex: none; font-weight: 600; margin-left: 2px; }
 .svn-picker-spacer { flex: 1; }
 .svn-picker-empty { padding: 24px 10px; text-align: center; color: var(--svn-muted); font-size: 12px; }
+.svn-picker-rootpath { color: var(--svn-muted); font-size: 11px; margin-left: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.svn-modal-head .svn-icon { background: transparent !important; border: none; }
 .svn-hbtn { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 9px; border-radius: 7px; border: 1px solid var(--svn-line); background: transparent; cursor: pointer; font-size: 11.5px; color: inherit; }
 .svn-hbtn:hover { background: var(--svn-hover); }
 .svn-hbtn-dot { width: 6px; height: 6px; border-radius: 50%; background: #4d6bfe; }
@@ -1565,6 +1568,7 @@ window.__ModuleLoader__.load({
           setData(result)
           setCurrent(result.current || '')
           setJump(result.current || '')
+          if (result.current) writeStorage(LAST_DIR_STORAGE, result.current)
         } catch (err) {
           if (seq.current === id) setError(String((err && err.message) || err))
         } finally {
@@ -1572,7 +1576,7 @@ window.__ModuleLoader__.load({
         }
       }, [])
 
-      useEffect(() => { load(props.initial || '') }, [load, props.initial])
+      useEffect(() => { load(props.initial || readStorage(LAST_DIR_STORAGE) || '') }, [load, props.initial])
 
       const canPick = !!(data && data.current)
       const isWc = !!(data && data.isWc)
@@ -1625,11 +1629,23 @@ window.__ModuleLoader__.load({
             : h('div', { className: 'svn-hint' }, '选择一个磁盘或常用目录开始；只列出文件夹，不读取文件内容。'),
           error ? h('div', { className: 'svn-errorbox', style: { margin: 0 } },
             h('span', null, error),
-            h('button', { type: 'button', className: 'svn-btn small', onClick: () => load(current || '') }, '重试'),
+            h('div', { style: { marginLeft: 'auto', display: 'flex', gap: 4 } },
+              h('button', { type: 'button', className: 'svn-btn small', onClick: () => load(current || '') }, '重试'),
+              h('button', { type: 'button', className: 'svn-btn small', onClick: () => load('') }, '起点'),
+            ),
           ) : null,
           loading ? h('div', { className: 'svn-loading', style: { flex: 'none', padding: 18 } }, h(Spinner), '读取目录…') : null,
           !loading && !error ? h('div', { className: 'svn-picker-list' },
-            data && data.atRoot ? h('div', { className: 'svn-picker-empty' }, '从上方选择磁盘、用户目录或当前目录') :
+            data && data.atRoot ? data.roots.map((root) => h('div', {
+              key: root.path,
+              className: 'svn-picker-row',
+              title: root.path,
+              onClick: () => load(root.path),
+            },
+              h('span', { className: 'svn-picker-icon' }, '▸'),
+              h('span', { className: 'svn-path' }, root.name),
+              h('span', { className: 'svn-picker-rootpath' }, root.path),
+            )) :
             data && data.entries.length === 0 ? h('div', { className: 'svn-picker-empty' }, '这个目录下没有子目录') :
             data ? data.entries.map((entry) => h('div', {
               key: entry.path,
