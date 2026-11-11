@@ -68,6 +68,7 @@ window.__ModuleLoader__.load({
 .svn-btn:disabled { opacity: .45; cursor: default; }
 .svn-btn.primary { background: var(--svn-accent); border-color: var(--svn-accent); color: #fff; font-weight: 600; }
 .svn-btn.primary:hover:not(:disabled) { background: #3f5bea; }
+.svn-btn.primary:disabled { background: var(--svn-soft); border-color: var(--svn-line); color: var(--svn-muted); opacity: 1; }
 .svn-btn.danger { color: #e5484d; border-color: rgba(229,72,77,.4); }
 .svn-btn.danger:hover:not(:disabled) { background: rgba(229,72,77,.12); }
 .svn-btn.small { padding: 3px 8px; font-size: 11.5px; border-radius: 6px; }
@@ -204,19 +205,30 @@ window.__ModuleLoader__.load({
 .svn-choice span { font-size: 11px; color: var(--svn-muted); }
 .svn-candidate { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--svn-soft); border-radius: 8px; }
 .svn-candidate .svn-path { font-size: 11px; }
-.svn-picker { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.svn-picker { display: flex; flex-direction: column; gap: 8px; height: min(62vh, 540px); min-height: 0; }
 .svn-picker-path { display: flex; gap: 6px; align-items: center; }
-.svn-picker-roots { display: flex; gap: 5px; flex-wrap: wrap; }
-.svn-picker-list { border: 1px solid var(--svn-line); border-radius: 9px; max-height: 42vh; overflow: auto; background: rgba(127,127,127,.03); }
-.svn-picker-row { display: flex; align-items: center; gap: 7px; padding: 6px 9px; border-bottom: 1px solid var(--svn-soft); cursor: pointer; min-width: 0; }
+.svn-picker-roots { display: flex; gap: 6px; flex-wrap: wrap; }
+.svn-picker-root { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--svn-line); background: transparent; border-radius: 7px; padding: 3px 9px; font-size: 11.5px; color: var(--svn-muted); cursor: pointer; }
+.svn-picker-root:hover { background: var(--svn-hover); color: CanvasText; }
+.svn-picker-tools { display: flex; gap: 8px; align-items: center; }
+.svn-picker-filter { flex: 1; min-width: 0; }
+.svn-picker-toggle { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--svn-muted); white-space: nowrap; cursor: pointer; user-select: none; }
+.svn-picker-toggle input { accent-color: var(--svn-accent); }
+.svn-picker-list { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--svn-line); border-radius: 10px; background: Canvas; }
+.svn-picker-row { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-bottom: 1px solid var(--svn-soft); cursor: pointer; min-width: 0; }
 .svn-picker-row:last-child { border-bottom: none; }
 .svn-picker-row:hover { background: var(--svn-hover); }
-.svn-picker-icon { color: var(--svn-muted); font-size: 11px; width: 12px; flex: none; }
-.svn-picker-row .svn-path { flex: 0 1 auto; font-size: 12px; color: CanvasText; }
-.svn-picker-wc { font-size: 9.5px; padding: 0 5px; border-radius: 4px; background: rgba(48,164,108,.16); color: #2f9e68; flex: none; font-weight: 600; margin-left: 2px; }
-.svn-picker-spacer { flex: 1; }
-.svn-picker-empty { padding: 24px 10px; text-align: center; color: var(--svn-muted); font-size: 12px; }
-.svn-picker-rootpath { color: var(--svn-muted); font-size: 11px; margin-left: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.svn-picker-row.is-wc { background: rgba(48,164,108,.05); }
+.svn-folder-glyph { flex: none; }
+.svn-picker-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.svn-picker-name { font-size: 12.5px; font-weight: 550; color: CanvasText; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.svn-picker-sub { font-size: 10.5px; color: var(--svn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.svn-picker-wc { font-size: 9.5px; padding: 1px 6px; border-radius: 999px; background: rgba(48,164,108,.16); color: #2f9e68; font-weight: 600; flex: none; }
+.svn-picker-chevron { color: var(--svn-muted); font-size: 15px; line-height: 1; flex: none; opacity: .7; }
+.svn-picker-empty { padding: 36px 10px; text-align: center; color: var(--svn-muted); font-size: 12px; }
+.svn-picker-status { font-size: 11.5px; color: var(--svn-muted); }
+.svn-picker-status.ok { color: #2f9e68; }
+.svn-picker-foot { display: flex; align-items: center; gap: 8px; width: 100%; }
 .svn-modal-head .svn-icon { background: transparent !important; border: none; }
 .svn-hbtn { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 9px; border-radius: 7px; border: 1px solid var(--svn-line); background: transparent; cursor: pointer; font-size: 11.5px; color: inherit; }
 .svn-hbtn:hover { background: var(--svn-hover); }
@@ -1549,12 +1561,33 @@ window.__ModuleLoader__.load({
       )
     }
 
+    function FolderGlyph(props) {
+      const color = props.wc ? '#2f9e68' : '#d9a441'
+      return h('svg', {
+        className: 'svn-folder-glyph',
+        width: 18,
+        height: 18,
+        viewBox: '0 0 24 24',
+        fill: 'none',
+        stroke: color,
+        strokeWidth: 1.7,
+        strokeLinejoin: 'round',
+      },
+        h('path', {
+          d: 'M3 7.2A1.7 1.7 0 0 1 4.7 5.5h5.1l1.9 2h7.1A1.7 1.7 0 0 1 20.5 9.2v8.3a1.7 1.7 0 0 1-1.7 1.7H4.7A1.7 1.7 0 0 1 3 17.5V7.2Z',
+          fill: props.wc ? 'rgba(48,164,108,.13)' : 'rgba(217,164,65,.13)',
+        }),
+      )
+    }
+
     function DirectoryPicker(props) {
       const [current, setCurrent] = useState(props.initial || '')
       const [data, setData] = useState(null)
       const [loading, setLoading] = useState(false)
       const [error, setError] = useState('')
       const [jump, setJump] = useState(props.initial || '')
+      const [filter, setFilter] = useState('')
+      const [showHidden, setShowHidden] = useState(false)
       const seq = useRef(0)
 
       const load = useCallback(async (target) => {
@@ -1568,6 +1601,7 @@ window.__ModuleLoader__.load({
           setData(result)
           setCurrent(result.current || '')
           setJump(result.current || '')
+          setFilter('')
           if (result.current) writeStorage(LAST_DIR_STORAGE, result.current)
         } catch (err) {
           if (seq.current === id) setError(String((err && err.message) || err))
@@ -1578,14 +1612,51 @@ window.__ModuleLoader__.load({
 
       useEffect(() => { load(props.initial || readStorage(LAST_DIR_STORAGE) || '') }, [load, props.initial])
 
+      const roots = (data && data.roots) || []
+      const entries = (data && data.entries) || []
+      const keyword = filter.trim().toLowerCase()
+      const visible = entries.filter((entry) => {
+        if (!showHidden && entry.name.startsWith('.')) return false
+        if (keyword && !entry.name.toLowerCase().includes(keyword)) return false
+        return true
+      })
       const canPick = !!(data && data.current)
       const isWc = !!(data && data.isWc)
 
+      const row = (item, asRoot) => h('div', {
+        key: (asRoot ? 'root:' : 'dir:') + item.path,
+        className: 'svn-picker-row' + (item.isWc ? ' is-wc' : ''),
+        title: item.path,
+        onClick: () => load(item.path),
+      },
+        h(FolderGlyph, { wc: !!item.isWc }),
+        h('div', { className: 'svn-picker-main' },
+          h('div', { className: 'svn-picker-name' }, item.name),
+          asRoot || item.isWc ? h('div', { className: 'svn-picker-sub' }, item.path) : null,
+        ),
+        item.isWc ? h('span', { className: 'svn-picker-wc' }, '工作副本') : null,
+        item.isWc
+          ? h('button', {
+              type: 'button',
+              className: 'svn-btn small primary',
+              onClick: (event) => { event.stopPropagation(); props.onPick(item.path, true) },
+            }, '选用')
+          : h('span', { className: 'svn-picker-chevron' }, '›'),
+      )
+
+      const status = !canPick
+        ? '请选择一个磁盘或常用目录'
+        : isWc
+          ? '✓ 当前目录是工作副本，可直接添加'
+          : '当前目录不是工作副本（没有 .svn），请继续进入根目录'
+
       return h(Modal, {
         title: '选择 SVN 工作副本目录',
-        width: 720,
+        width: 760,
         onClose: props.onClose,
-        footer: h(React.Fragment, null,
+        footer: h('div', { className: 'svn-picker-foot' },
+          h('span', { className: 'svn-picker-status' + (isWc ? ' ok' : '') }, status),
+          h('div', { className: 'svn-footer-gap' }),
           h('button', { type: 'button', className: 'svn-btn', onClick: props.onClose }, '取消'),
           h('button', {
             type: 'button',
@@ -1613,20 +1684,30 @@ window.__ModuleLoader__.load({
             }),
             h('button', { type: 'button', className: 'svn-btn small', onClick: () => load(jump.trim()), disabled: loading }, '转到'),
           ),
-          data && data.roots && data.roots.length ? h('div', { className: 'svn-picker-roots' },
-            data.roots.map((root) => h('button', {
+          roots.length ? h('div', { className: 'svn-picker-roots' },
+            roots.map((root) => h('button', {
               key: root.path,
               type: 'button',
-              className: 'svn-chip',
+              className: 'svn-picker-root',
               title: root.path,
               onClick: () => load(root.path),
             }, root.name)),
           ) : null,
-          data && data.current
-            ? h('div', { className: 'svn-hint' }, isWc
-              ? '✓ 当前目录是 SVN 工作副本，可直接添加。'
-              : '当前目录不是工作副本（没有 .svn）；请继续进入工作副本根目录。')
-            : h('div', { className: 'svn-hint' }, '选择一个磁盘或常用目录开始；只列出文件夹，不读取文件内容。'),
+          h('div', { className: 'svn-picker-tools' },
+            h('input', {
+              className: 'svn-input svn-picker-filter',
+              placeholder: '筛选当前目录…',
+              value: filter,
+              onChange: (event) => setFilter(event.target.value),
+            }),
+            h('label', { className: 'svn-picker-toggle' },
+              h('input', { type: 'checkbox', checked: showHidden, onChange: (event) => setShowHidden(event.target.checked) }),
+              '显示隐藏',
+            ),
+            h('span', { className: 'svn-picker-status' },
+              data ? (data.atRoot ? roots.length + ' 个位置' : visible.length + ' / ' + entries.length + ' 项') : '',
+            ),
+          ),
           error ? h('div', { className: 'svn-errorbox', style: { margin: 0 } },
             h('span', null, error),
             h('div', { style: { marginLeft: 'auto', display: 'flex', gap: 4 } },
@@ -1634,37 +1715,12 @@ window.__ModuleLoader__.load({
               h('button', { type: 'button', className: 'svn-btn small', onClick: () => load('') }, '起点'),
             ),
           ) : null,
-          loading ? h('div', { className: 'svn-loading', style: { flex: 'none', padding: 18 } }, h(Spinner), '读取目录…') : null,
+          loading ? h('div', { className: 'svn-loading', style: { flex: 'none', padding: 24 } }, h(Spinner), '读取目录…') : null,
           !loading && !error ? h('div', { className: 'svn-picker-list' },
-            data && data.atRoot ? data.roots.map((root) => h('div', {
-              key: root.path,
-              className: 'svn-picker-row',
-              title: root.path,
-              onClick: () => load(root.path),
-            },
-              h('span', { className: 'svn-picker-icon' }, '▸'),
-              h('span', { className: 'svn-path' }, root.name),
-              h('span', { className: 'svn-picker-rootpath' }, root.path),
-            )) :
-            data && data.entries.length === 0 ? h('div', { className: 'svn-picker-empty' }, '这个目录下没有子目录') :
-            data ? data.entries.map((entry) => h('div', {
-              key: entry.path,
-              className: 'svn-picker-row',
-              title: entry.path,
-              onClick: () => load(entry.path),
-            },
-              h('span', { className: 'svn-picker-icon' }, '▸'),
-              h('span', { className: 'svn-path' }, entry.name),
-              entry.isWc ? h('span', { className: 'svn-picker-wc' }, '.svn') : null,
-              h('span', { className: 'svn-picker-spacer' }),
-              entry.isWc ? h('button', {
-                type: 'button',
-                className: 'svn-btn small primary',
-                onClick: (event) => { event.stopPropagation(); props.onPick(entry.path, true) },
-              }, '选用') : null,
-            )) : null,
+            data && data.atRoot ? roots.map((root) => row(root, true)) :
+            visible.length === 0 ? h('div', { className: 'svn-picker-empty' }, keyword ? '没有匹配的文件夹' : '这个目录下没有子目录') :
+            visible.map((entry) => row(entry, false)),
           ) : null,
-          data && data.truncated ? h('div', { className: 'svn-hint' }, '子目录过多，只显示前 800 个；可直接在上方输入路径跳转。') : null,
         ),
       )
     }
